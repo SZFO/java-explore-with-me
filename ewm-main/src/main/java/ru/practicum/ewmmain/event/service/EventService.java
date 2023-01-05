@@ -1,9 +1,7 @@
 package ru.practicum.ewmmain.event.service;
 
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.ewmmain.event.dto.*;
-import ru.practicum.ewmmain.event.model.StateEvent;
 import ru.practicum.ewmmain.request.dto.ParticipationRequestDto;
 
 import java.time.LocalDateTime;
@@ -37,8 +35,8 @@ public interface EventService {
     ParticipationRequestDto rejectUsersRequest(Long userId, Long eventId, Long requestId);
 
     List<EventShortDto> getPublicFiltered(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart,
-                                        LocalDateTime rangeEnd, Boolean onlyAvailable, String sort,
-                                        Integer from, Integer size);
+                                          LocalDateTime rangeEnd, Boolean onlyAvailable, String sort,
+                                          Integer from, Integer size);
 
     EventFullDto getFullPublicEvent(Long eventId);
 }
