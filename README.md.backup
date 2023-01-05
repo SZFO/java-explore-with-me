@@ -24,14 +24,14 @@ Java 17, Spring Boot, Maven, Lombok, REST API, PostgreSql, JPA, Hibernate, Jacks
 
 ### Сборка и запуск
 
-Сборка проекта:
+Сначала необходимо собрать проект
 
 >mvn clean install
 
-Развертывание проекта:
+Для развертывания проекта необходимо выполнить команду:
 
 > docker-compose up
 
-Остановка проекта:
+Чтобы остановить проект, нужно выполнить команду:
 
 > docker-compose stop
