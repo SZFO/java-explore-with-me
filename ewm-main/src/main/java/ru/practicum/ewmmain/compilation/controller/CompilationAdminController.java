@@ -22,17 +22,17 @@ public class CompilationAdminController {
     private final CompilationService compilationService;
 
     @PostMapping
-    public CompilationDto create(@RequestBody @Valid NewCompilationDto newCompilationDto) {
-        log.info("Вызван метод create() в CompilationAdminController.");
-        CompilationDto create = compilationService.create(newCompilationDto);
+    public CompilationDto createCompilation(@RequestBody @Valid NewCompilationDto newCompilationDto) {
+        log.info("Вызван метод createCompilation() в CompilationAdminController.");
+        CompilationDto createCompilation = compilationService.createCompilation(newCompilationDto);
 
-        return ResponseEntity.ok().body(create).getBody();
+        return ResponseEntity.ok().body(createCompilation).getBody();
     }
 
     @DeleteMapping("/{compId}")
-    public ResponseEntity<HttpStatus> delete(@PathVariable @Positive Long compId) {
-        log.info("Вызван метод delete() в CompilationAdminController для подборки событий с id {}.", compId);
-        compilationService.delete(compId);
+    public ResponseEntity<HttpStatus> deleteCompilation(@PathVariable @Positive Long compId) {
+        log.info("Вызван метод deleteCompilation() в CompilationAdminController для подборки событий с id {}.", compId);
+        compilationService.deleteCompilation(compId);
 
         return ResponseEntity.ok().build();
     }
@@ -58,17 +58,17 @@ public class CompilationAdminController {
     }
 
     @DeleteMapping("/{compId}/pin")
-    public ResponseEntity<HttpStatus> unpin(@PathVariable @Positive Long compId) {
-        log.info("Вызван метод unpin() в CompilationAdminController для подборки событий с id {}.", compId);
-        compilationService.unpin(compId);
+    public ResponseEntity<HttpStatus> unpinCompilation(@PathVariable @Positive Long compId) {
+        log.info("Вызван метод unpinCompilation() в CompilationAdminController для подборки событий с id {}.", compId);
+        compilationService.unpinCompilation(compId);
 
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{compId}/pin")
-    public ResponseEntity<HttpStatus> pin(@PathVariable @Positive Long compId) {
-        log.info("Вызван метод pin() в CompilationAdminController для подборки событий с id {}.", compId);
-        compilationService.pin(compId);
+    public ResponseEntity<HttpStatus> pinCompilation(@PathVariable @Positive Long compId) {
+        log.info("Вызван метод pinCompilation() в CompilationAdminController для подборки событий с id {}.", compId);
+        compilationService.pinCompilation(compId);
 
         return ResponseEntity.ok().build();
     }

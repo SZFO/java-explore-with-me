@@ -27,32 +27,32 @@ public class EventPrivateController {
     private final EventService eventService;
 
     @PostMapping
-    public EventFullDto create(@PathVariable(required = false) Long userId,
-                               @RequestBody(required = false) @Valid NewEventDto newEventDto) {
-        log.info("Вызван метод create() в EventPrivateController пользователем с id = {}.", userId);
-        EventFullDto create = eventService.create(userId, newEventDto);
+    public EventFullDto createEvent(@PathVariable(required = false) Long userId,
+                                    @RequestBody(required = false) @Valid NewEventDto newEventDto) {
+        log.info("Вызван метод createEvent() в EventPrivateController пользователем с id = {}.", userId);
+        EventFullDto createEvent = eventService.createEvent(userId, newEventDto);
 
-        return ResponseEntity.ok().body(create).getBody();
+        return ResponseEntity.ok().body(createEvent).getBody();
     }
 
     @PatchMapping
-    public EventFullDto update(@PathVariable(required = false) @Positive Long userId,
-                               @RequestBody(required = false) @Valid UpdateEventRequest updateRequest) {
+    public EventFullDto updateEventByOwner(@PathVariable(required = false) @Positive Long userId,
+                                           @RequestBody(required = false) @Valid UpdateEventRequest updateRequest) {
         log.info("Вызван метод updateByOwner() в EventPrivateController пользователем с id = {}.", userId);
-        EventFullDto update = eventService.updateByOwner(userId, updateRequest);
+        EventFullDto updateEventByOwner = eventService.updateEventByOwner(userId, updateRequest);
 
-        return ResponseEntity.ok().body(update).getBody();
+        return ResponseEntity.ok().body(updateEventByOwner).getBody();
     }
 
     @GetMapping
-    public List<EventShortDto> getByOwner(@PathVariable(required = false) @Positive Long userId,
-                                          @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                          @RequestParam(defaultValue = "10") @Positive Integer size) {
+    public List<EventShortDto> getEventByOwner(@PathVariable(required = false) @Positive Long userId,
+                                               @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                               @RequestParam(defaultValue = "10") @Positive Integer size) {
         log.info("Вызван метод getByOwner() в EventPrivateController пользователем с id = {}.", userId);
         PageRequest pageRequest = PageRequest.of(from, size);
-        List<EventShortDto> getByOwner = eventService.getByOwner(userId, pageRequest);
+        List<EventShortDto> getEventByOwner = eventService.getEventByOwner(userId, pageRequest);
 
-        return ResponseEntity.ok().body(getByOwner).getBody();
+        return ResponseEntity.ok().body(getEventByOwner).getBody();
     }
 
     @GetMapping("/{eventId}")

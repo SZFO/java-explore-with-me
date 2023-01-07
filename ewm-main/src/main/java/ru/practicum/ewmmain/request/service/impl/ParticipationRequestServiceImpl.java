@@ -3,6 +3,7 @@ package ru.practicum.ewmmain.request.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewmmain.event.model.Event;
 import ru.practicum.ewmmain.event.model.StateEvent;
 import ru.practicum.ewmmain.event.repository.EventRepository;
@@ -21,8 +22,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.practicum.ewmmain.request.mapper.ParticipationRequestMapper.*;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,17 +32,19 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
     private final EventRepository eventRepository;
 
+    private final ParticipationRequestMapper participationRequestMapper;
+
     @Override
     public List<ParticipationRequestDto> getRequestsByUserId(Long userId) {
         return participationRequestRepository.findByRequesterId(userId)
                 .stream()
-                .map(ParticipationRequestMapper::requestToParticipationRequestDto)
+                .map(participationRequestMapper::requestToParticipationRequestDto)
                 .collect(Collectors.toList());
     }
 
-
     @Override
-    public ParticipationRequestDto create(Long userId, Long eventId) {
+    @Transactional
+    public ParticipationRequestDto createParticipationRequest(Long userId, Long eventId) {
         User user = getUserById(userId);
         Event event = getEventById(eventId);
         ParticipationRequest participationRequest = ParticipationRequest.builder()
@@ -60,17 +61,20 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         }
         log.info("Успешная валидадция. Создание запроса на участие.");
 
-        return requestToParticipationRequestDto(participationRequestRepository.save(participationRequest));
+        return participationRequestMapper.requestToParticipationRequestDto(
+                participationRequestRepository.save(participationRequest));
     }
 
     @Override
-    public ParticipationRequestDto cancel(Long userId, Long requestId) {
+    @Transactional
+    public ParticipationRequestDto cancelParticipationRequest(Long userId, Long requestId) {
         getUserById(userId);
         ParticipationRequest participationRequest = getRequestById(requestId);
         participationRequest.setStatus(StateParticipationRequest.CANCELED);
         log.info("Успешная валидадция. Отмена запроса на участие.");
 
-        return requestToParticipationRequestDto(participationRequestRepository.save(participationRequest));
+        return participationRequestMapper.requestToParticipationRequestDto(
+                participationRequestRepository.save(participationRequest));
     }
 
     private User getUserById(Long userId) {

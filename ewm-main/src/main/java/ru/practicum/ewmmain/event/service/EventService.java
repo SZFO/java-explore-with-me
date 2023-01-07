@@ -9,20 +9,20 @@ import java.util.List;
 
 public interface EventService {
 
-    List<EventFullDto> getByAdmin(List<Long> users, List<String> states, List<Long> categories,
+    List<EventFullDto> getEventByAdmin(List<Long> users, List<String> states, List<Long> categories,
                                   LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from, Integer size);
 
-    EventFullDto updateByAdmin(Long eventId, AdminUpdateEventRequest adminUpdateEventRequest);
+    EventFullDto updateEventByAdmin(Long eventId, AdminUpdateEventRequest adminUpdateEventRequest);
 
-    EventFullDto publish(Long eventId);
+    EventFullDto publishEvent(Long eventId);
 
-    EventFullDto reject(Long eventId);
+    EventFullDto rejectEvent(Long eventId);
 
-    List<EventShortDto> getByOwner(Long userId, Pageable pageable);
+    List<EventShortDto> getEventByOwner(Long userId, Pageable pageable);
 
-    EventFullDto updateByOwner(Long userId, UpdateEventRequest updateEventRequest);
+    EventFullDto updateEventByOwner(Long userId, UpdateEventRequest updateEventRequest);
 
-    EventFullDto create(Long userId, NewEventDto newEventDto);
+    EventFullDto createEvent(Long userId, NewEventDto newEventDto);
 
     EventFullDto getAuthorsEventById(Long userId, Long eventId);
 
@@ -34,7 +34,7 @@ public interface EventService {
 
     ParticipationRequestDto rejectUsersRequest(Long userId, Long eventId, Long requestId);
 
-    List<EventShortDto> getPublicFiltered(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart,
+    List<EventShortDto> getPublicFilteredEvent(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart,
                                           LocalDateTime rangeEnd, Boolean onlyAvailable, String sort,
                                           Integer from, Integer size);
 

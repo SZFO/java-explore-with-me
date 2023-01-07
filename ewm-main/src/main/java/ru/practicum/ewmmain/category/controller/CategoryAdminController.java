@@ -22,25 +22,25 @@ public class CategoryAdminController {
     private final CategoryService categoryService;
 
     @PostMapping
-    public CategoryDto create(@RequestBody @Valid NewCategoryDto newCategoryDto) {
-        log.info("Вызван метод create() в CategoryAdminController.");
-        CategoryDto create = categoryService.create(newCategoryDto);
+    public CategoryDto createCategory(@RequestBody @Valid NewCategoryDto newCategoryDto) {
+        log.info("Вызван метод createCategory() в CategoryAdminController.");
+        CategoryDto createCategory = categoryService.createCategory(newCategoryDto);
 
-        return ResponseEntity.ok().body(create).getBody();
+        return ResponseEntity.ok().body(createCategory).getBody();
     }
 
     @PatchMapping
-    public CategoryDto update(@RequestBody @Valid CategoryDto categoryDto) {
-        log.info("Вызван метод update() в CategoryAdminController.");
-        CategoryDto update = categoryService.update(categoryDto);
+    public CategoryDto updateCategory(@RequestBody @Valid CategoryDto categoryDto) {
+        log.info("Вызван метод updateCategory() в CategoryAdminController.");
+        CategoryDto updateCategory = categoryService.updateCategory(categoryDto);
 
-        return ResponseEntity.ok().body(update).getBody();
+        return ResponseEntity.ok().body(updateCategory).getBody();
     }
 
     @DeleteMapping("/{catId}")
-    public ResponseEntity<HttpStatus> delete(@PathVariable(name = "catId") @NotNull Long id) {
-        log.info("Вызван метод delete() в CategoryAdminController для категории с id {}.", id);
-        categoryService.delete(id);
+    public ResponseEntity<HttpStatus> deleteCategory(@PathVariable(name = "catId") @NotNull Long id) {
+        log.info("Вызван метод deleteCategory() в CategoryAdminController для категории с id {}.", id);
+        categoryService.deleteCategory(id);
 
         return ResponseEntity.ok().build();
     }

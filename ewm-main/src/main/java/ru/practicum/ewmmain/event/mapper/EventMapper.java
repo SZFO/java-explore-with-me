@@ -1,7 +1,9 @@
 package ru.practicum.ewmmain.event.mapper;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewmmain.category.dto.CategoryDto;
+import ru.practicum.ewmmain.category.mapper.CategoryMapper;
 import ru.practicum.ewmmain.category.model.Category;
 import ru.practicum.ewmmain.event.dto.EventFullDto;
 import ru.practicum.ewmmain.event.dto.EventShortDto;
@@ -9,12 +11,16 @@ import ru.practicum.ewmmain.event.dto.NewEventDto;
 import ru.practicum.ewmmain.event.model.Event;
 import ru.practicum.ewmmain.event.model.Location;
 import ru.practicum.ewmmain.user.dto.UserShortDto;
+import ru.practicum.ewmmain.user.mapper.UserMapper;
 import ru.practicum.ewmmain.user.model.User;
 
 @Component
+@RequiredArgsConstructor
 public class EventMapper {
+    private final CategoryMapper categoryMapper;
+    private final UserMapper userMapper;
 
-    public static Event dtoToNewEvent(NewEventDto newEventDto, Category category, User initiator) {
+    public Event dtoToNewEvent(NewEventDto newEventDto, Category category, User initiator) {
         return Event.builder()
                 .annotation(newEventDto.getAnnotation())
                 .initiator(initiator)
@@ -30,8 +36,8 @@ public class EventMapper {
                 .build();
     }
 
-    public static EventFullDto eventToFullDto(Event event, CategoryDto category, UserShortDto initiator,
-                                              Long confirmedRequests, Long view) {
+    public EventFullDto eventToFullDto(Event event, CategoryDto category, UserShortDto initiator,
+                                       Long confirmedRequests, Long view) {
         return EventFullDto.builder()
                 .id(event.getId())
                 .annotation(event.getAnnotation())
@@ -52,8 +58,8 @@ public class EventMapper {
                 .build();
     }
 
-    public static EventShortDto eventToShortDto(Event event, CategoryDto category, UserShortDto initiator,
-                                                Long confirmedRequests, Long view) {
+    public EventShortDto eventToShortDto(Event event, CategoryDto category, UserShortDto initiator,
+                                         Long confirmedRequests, Long view) {
         return EventShortDto.builder()
                 .id(event.getId())
                 .annotation(event.getAnnotation())
@@ -71,6 +77,18 @@ public class EventMapper {
         return Location.builder()
                 .lat(lat)
                 .lon(lon)
+                .build();
+    }
+
+    public EventShortDto toShortDto(Event event) {
+        return EventShortDto.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .annotation(event.getAnnotation())
+                .category(categoryMapper.categoryToDto(event.getCategory()))
+                .eventDate(event.getEventDate())
+                .paid(event.getPaid())
+                .initiator(userMapper.userToShortDto(event.getInitiator()))
                 .build();
     }
 }

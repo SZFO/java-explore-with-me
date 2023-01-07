@@ -1,10 +1,12 @@
 package ru.practicum.ewmstats.mapper;
 
+import org.springframework.stereotype.Component;
 import ru.practicum.ewmstats.dto.EndpointHitDto;
 import ru.practicum.ewmstats.model.EndpointHit;
 
+@Component
 public class EndpointHitMapper {
-    public static EndpointHit dtotoEndpointHit(EndpointHitDto endpointHitDto) {
+    public EndpointHit dtotoEndpointHit(EndpointHitDto endpointHitDto) {
         return EndpointHit.builder()
                 .app(endpointHitDto.getApp())
                 .uri(endpointHitDto.getUri())
@@ -12,7 +14,7 @@ public class EndpointHitMapper {
                 .build();
     }
 
-    public static EndpointHitDto endpointHitToDto(EndpointHit endpointHit) {
+    public EndpointHitDto endpointHitToDto(EndpointHit endpointHit) {
         return EndpointHitDto.builder()
                 .id(endpointHit.getId())
                 .app(endpointHit.getApp())

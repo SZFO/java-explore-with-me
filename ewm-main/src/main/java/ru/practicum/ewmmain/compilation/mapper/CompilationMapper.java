@@ -11,7 +11,7 @@ import java.util.List;
 
 @Component
 public class CompilationMapper {
-    public static CompilationDto compilationToDto(Compilation compilation, List<EventShortDto> events) {
+    public CompilationDto compilationToDto(Compilation compilation, List<EventShortDto> events) {
         return CompilationDto.builder()
                 .id(compilation.getId())
                 .title(compilation.getTitle())
@@ -20,7 +20,7 @@ public class CompilationMapper {
                 .build();
     }
 
-    public static Compilation compilationNewToDto(NewCompilationDto newCompilationDto, List<Event> events) {
+    public Compilation compilationNewToDto(NewCompilationDto newCompilationDto, List<Event> events) {
         return Compilation.builder()
                 .title(newCompilationDto.getTitle())
                 .pinned(newCompilationDto.getPinned())

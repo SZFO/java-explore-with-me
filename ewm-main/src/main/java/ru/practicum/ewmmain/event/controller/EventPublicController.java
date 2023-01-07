@@ -26,32 +26,32 @@ public class EventPublicController {
     private final StatsClient statsClient;
 
     @GetMapping("/{eventId}")
-    public EventFullDto getById(@PathVariable @Positive Long eventId, HttpServletRequest request) {
+    public EventFullDto getFullPublicEvent(@PathVariable @Positive Long eventId, HttpServletRequest request) {
         statsClient.save(request);
         log.info("Вызван метод getFullPublicEvent() в EventPublicController для события с id = {}.", eventId);
-        EventFullDto getById = eventService.getFullPublicEvent(eventId);
+        EventFullDto getFullPublicEvent = eventService.getFullPublicEvent(eventId);
 
-        return ResponseEntity.ok().body(getById).getBody();
+        return ResponseEntity.ok().body(getFullPublicEvent).getBody();
     }
 
     @GetMapping
-    public List<EventShortDto> getFiltered(@RequestParam(required = false) String text,
-                                           @RequestParam(required = false) List<Long> categories,
-                                           @RequestParam(required = false) Boolean paid,
-                                           @RequestParam(required = false)
-                                           @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-                                           @RequestParam(required = false)
-                                           @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
-                                           @RequestParam(defaultValue = "false") boolean onlyAvailable,
-                                           @RequestParam(defaultValue = "EVENT_DATE") String sort,
-                                           @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                           @RequestParam(defaultValue = "10") @Positive Integer size,
-                                           HttpServletRequest request) {
+    public List<EventShortDto> getPublicFilteredEvent(@RequestParam(required = false) String text,
+                                                      @RequestParam(required = false) List<Long> categories,
+                                                      @RequestParam(required = false) Boolean paid,
+                                                      @RequestParam(required = false)
+                                                      @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
+                                                      @RequestParam(required = false)
+                                                      @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
+                                                      @RequestParam(defaultValue = "false") boolean onlyAvailable,
+                                                      @RequestParam(defaultValue = "EVENT_DATE") String sort,
+                                                      @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                                      @RequestParam(defaultValue = "10") @Positive Integer size,
+                                                      HttpServletRequest request) {
         statsClient.save(request);
         log.info("Вызван метод getPublicFiltered() в EventPublicController.");
-        List<EventShortDto> getFiltered = eventService.getPublicFiltered(text, categories, paid, rangeStart,
+        List<EventShortDto> getPublicFilteredEvent = eventService.getPublicFilteredEvent(text, categories, paid, rangeStart,
                 rangeEnd, onlyAvailable, sort, from, size);
 
-        return ResponseEntity.ok().body(getFiltered).getBody();
+        return ResponseEntity.ok().body(getPublicFilteredEvent).getBody();
     }
 }

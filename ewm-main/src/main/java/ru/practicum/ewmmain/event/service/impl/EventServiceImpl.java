@@ -9,7 +9,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewmmain.category.dto.CategoryDto;
+import ru.practicum.ewmmain.category.mapper.CategoryMapper;
 import ru.practicum.ewmmain.category.model.Category;
 import ru.practicum.ewmmain.category.repository.CategoryRepository;
 import ru.practicum.ewmmain.event.dto.*;
@@ -29,17 +31,15 @@ import ru.practicum.ewmmain.request.model.StateParticipationRequest;
 import ru.practicum.ewmmain.request.repository.ParticipationRequestRepository;
 import ru.practicum.ewmmain.stat.client.StatsClient;
 import ru.practicum.ewmmain.user.dto.UserShortDto;
+import ru.practicum.ewmmain.user.mapper.UserMapper;
 import ru.practicum.ewmmain.user.model.User;
 import ru.practicum.ewmmain.user.repository.UserRepository;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.querydsl.core.types.ExpressionUtils.allOf;
-import static ru.practicum.ewmmain.event.mapper.EventMapper.*;
-import static ru.practicum.ewmmain.category.mapper.CategoryMapper.*;
-import static ru.practicum.ewmmain.request.mapper.ParticipationRequestMapper.*;
-import static ru.practicum.ewmmain.user.mapper.UserMapper.*;
 
 @Service
 @Slf4j
@@ -55,14 +55,23 @@ public class EventServiceImpl implements EventService {
 
     private final StatsClient statsClient;
 
+    private final CategoryMapper categoryMapper;
+
+    private final EventMapper eventMapper;
+
+    private final ParticipationRequestMapper participationRequestMapper;
+
+    private final UserMapper userMapper;
+
     @Override
-    public EventFullDto create(Long userId, NewEventDto newEventDto) {
+    @Transactional
+    public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
         if (newEventDto.getEventDate().minusHours(2).isBefore(LocalDateTime.now()))
             throw new BadRequestException("Дата и время на которые намечено событие не может быть раньше, " +
                     "чем через два часа от текущего момента.");
         User user = getUserById(userId);
         Category category = getCategoryById(newEventDto.getCategory());
-        Event event = dtoToNewEvent(newEventDto, category, user);
+        Event event = eventMapper.dtoToNewEvent(newEventDto, category, user);
         event.setState(StateEvent.PENDING);
         Event newEvent = eventRepository.save(event);
         log.info("Добавлено новое событие с id = {}.", newEvent.getId());
@@ -81,19 +90,22 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventShortDto> getByOwner(Long userId, Pageable pageable) {
+    public List<EventShortDto> getEventByOwner(Long userId, Pageable pageable) {
         List<Event> eventList = eventRepository.findAllByInitiatorId(userId, pageable);
+        List<Long> eventIds = eventList.stream().map(Event::getId).collect(Collectors.toList());
         log.info("Получены события, добавленные пользователем с id = {}.", userId);
+
         return eventList.stream()
-                .map(e -> eventToShortDto(e, categoryToDto(e.getCategory()),
-                        userToShortDto(e.getInitiator()),
-                        participationRequestRepository.countAllByEventIdAndStatus(e.getId(),
+                .map(e -> eventMapper.eventToShortDto(e, categoryMapper.categoryToDto(e.getCategory()),
+                        userMapper.userToShortDto(e.getInitiator()),
+                        participationRequestRepository.countAllByEventIdAndStatus(eventIds,
                                 StateParticipationRequest.CONFIRMED),
                         statsClient.getViews(e)))
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public EventFullDto cancelAuthorsEvent(Long userId, Long eventId) {
         User initiator = getUserById(userId);
         Event event = getEventById(eventId);
@@ -110,7 +122,8 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto updateByOwner(Long userId, UpdateEventRequest updateEventRequest) {
+    @Transactional
+    public EventFullDto updateEventByOwner(Long userId, UpdateEventRequest updateEventRequest) {
         User user = getUserById(userId);
         Event oldEvent = getEventById(updateEventRequest.getEventId());
         throwEventInitiator(oldEvent, user);
@@ -145,11 +158,12 @@ public class EventServiceImpl implements EventService {
         log.info("Получена информация о запросах на участие в событии с id = {} текущего пользователя.", eventId);
 
         return requests.stream()
-                .map(ParticipationRequestMapper::requestToParticipationRequestDto)
+                .map(participationRequestMapper::requestToParticipationRequestDto)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public ParticipationRequestDto rejectUsersRequest(Long userId, Long eventId, Long requestId) {
         User user = getUserById(userId);
         Event event = getEventById(eventId);
@@ -160,10 +174,11 @@ public class EventServiceImpl implements EventService {
         log.info("Отклонение чужой заявки с id = {} на участие в событии с id = {} текущего пользователя.",
                 requestId, eventId);
 
-        return requestToParticipationRequestDto(participationRequest);
+        return participationRequestMapper.requestToParticipationRequestDto(participationRequest);
     }
 
     @Override
+    @Transactional
     public ParticipationRequestDto confirmUsersRequest(Long userId, Long eventId, Long requestId) {
         User initiator = getUserById(userId);
         Event event = getEventById(eventId);
@@ -171,7 +186,7 @@ public class EventServiceImpl implements EventService {
         throwEventInitiator(event, initiator);
         if (event.getParticipantLimit() != 0 && Boolean.TRUE.equals(event.getRequestModeration())) {
             long limit = event.getParticipantLimit();
-            long participantRequest = participationRequestRepository.countAllByEventIdAndStatus(event.getId(),
+            long participantRequest = participationRequestRepository.countAllByEventIdAndStatus(List.of(event.getId()),
                     StateParticipationRequest.CONFIRMED);
             if (limit < participantRequest) {
                 throw new BadRequestException(String.format("Нельзя подтвердить заявку на событие с id = %s. " +
@@ -191,13 +206,13 @@ public class EventServiceImpl implements EventService {
         log.info("Подтверждение чужой заявки с id = {} на участие в событии с id = {} текущего пользователя.",
                 requestId, eventId);
 
-        return requestToParticipationRequestDto(participationRequest);
+        return participationRequestMapper.requestToParticipationRequestDto(participationRequest);
     }
 
     @Override
-    public List<EventShortDto> getPublicFiltered(String text, List<Long> categories, Boolean paid,
-                                                 LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                 Boolean onlyAvailable, String sort, Integer from, Integer size) {
+    public List<EventShortDto> getPublicFilteredEvent(String text, List<Long> categories, Boolean paid,
+                                                      LocalDateTime rangeStart, LocalDateTime rangeEnd,
+                                                      Boolean onlyAvailable, String sort, Integer from, Integer size) {
         String sorting;
         switch (sort) {
             case "EVENT_DATE":
@@ -238,12 +253,13 @@ public class EventServiceImpl implements EventService {
         Predicate conditions = allOf(predicateList);
         assert conditions != null;
         Page<Event> filteredEvents = eventRepository.findAll(conditions, pageRequest);
+        List<Long> eventIds = filteredEvents.getContent().stream().map(Event::getId).collect(Collectors.toList());
         log.info("Получены события с возможностью фильтрации.");
 
         return filteredEvents.stream()
-                .map(e -> EventMapper.eventToShortDto(e, categoryToDto(e.getCategory()),
-                        userToShortDto(e.getInitiator()),
-                        participationRequestRepository.countAllByEventIdAndStatus(e.getId(),
+                .map(e -> eventMapper.eventToShortDto(e, categoryMapper.categoryToDto(e.getCategory()),
+                        userMapper.userToShortDto(e.getInitiator()),
+                        participationRequestRepository.countAllByEventIdAndStatus(eventIds,
                                 StateParticipationRequest.CONFIRMED),
                         statsClient.getViews(e)))
                 .collect(Collectors.toList());
@@ -255,19 +271,19 @@ public class EventServiceImpl implements EventService {
         if (!event.getState().equals(StateEvent.PUBLISHED)) {
             throw new BadRequestException("Событие должно быть опубликовано.");
         }
-        CategoryDto category = categoryToDto(event.getCategory());
-        UserShortDto userShortDto = userToShortDto(event.getInitiator());
+        CategoryDto category = categoryMapper.categoryToDto(event.getCategory());
+        UserShortDto userShortDto = userMapper.userToShortDto(event.getInitiator());
         log.info("Получена подробная информация об опубликованном событии с id = {}.", eventId);
 
-        return eventToFullDto(event, category, userShortDto,
-                participationRequestRepository.countAllByEventIdAndStatus(event.getId(),
+        return eventMapper.eventToFullDto(event, category, userShortDto,
+                participationRequestRepository.countAllByEventIdAndStatus(List.of(event.getId()),
                         StateParticipationRequest.CONFIRMED),
                 statsClient.getViews(event));
     }
 
     @Override
-    public List<EventFullDto> getByAdmin(List<Long> users, List<String> states, List<Long> categories,
-                                         LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from, Integer size) {
+    public List<EventFullDto> getEventByAdmin(List<Long> users, List<String> states, List<Long> categories,
+                                              LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from, Integer size) {
         PageRequest pageRequest = PageRequest.of(from, size);
         LocalDateTime start = rangeStart == null ? LocalDateTime.now() : rangeStart;
         LocalDateTime end = rangeEnd == null ? LocalDateTime.now().plusMonths(1) : rangeEnd;
@@ -302,7 +318,8 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto updateByAdmin(Long eventId, AdminUpdateEventRequest adminUpdateEventRequest) {
+    @Transactional
+    public EventFullDto updateEventByAdmin(Long eventId, AdminUpdateEventRequest adminUpdateEventRequest) {
         Event event = getEventById(eventId);
         Optional.ofNullable(adminUpdateEventRequest.getAnnotation()).ifPresent(event::setAnnotation);
         Optional.ofNullable(adminUpdateEventRequest.getDescription()).ifPresent(event::setDescription);
@@ -324,7 +341,8 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto publish(Long eventId) {
+    @Transactional
+    public EventFullDto publishEvent(Long eventId) {
         Event event = getEventById(eventId);
         if (!event.getState().equals(StateEvent.PENDING)) {
             throw new BadRequestException("Событие должно быть в состоянии ожидания публикации.");
@@ -341,7 +359,8 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto reject(Long eventId) {
+    @Transactional
+    public EventFullDto rejectEvent(Long eventId) {
         Event event = getEventById(eventId);
         if (!event.getState().equals(StateEvent.PENDING)) {
             throw new BadRequestException("Событие должно быть в состоянии ожидания публикации.");
@@ -389,10 +408,10 @@ public class EventServiceImpl implements EventService {
     }
 
     private EventFullDto getCompleteFullDto(Event event) {
-        return EventMapper.eventToFullDto(event,
-                categoryToDto(event.getCategory()),
-                userToShortDto(event.getInitiator()),
-                participationRequestRepository.countAllByEventIdAndStatus(event.getId(),
+        return eventMapper.eventToFullDto(event,
+                categoryMapper.categoryToDto(event.getCategory()),
+                userMapper.userToShortDto(event.getInitiator()),
+                participationRequestRepository.countAllByEventIdAndStatus(List.of(event.getId()),
                         StateParticipationRequest.CONFIRMED),
                 statsClient.getViews(event));
     }

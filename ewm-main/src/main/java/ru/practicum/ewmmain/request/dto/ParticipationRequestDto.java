@@ -1,6 +1,5 @@
 package ru.practicum.ewmmain.request.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.ewmmain.request.model.StateParticipationRequest;
@@ -17,7 +16,6 @@ import java.time.LocalDateTime;
 public class ParticipationRequestDto {
     Long id;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     LocalDateTime created;
 
     @NotNull

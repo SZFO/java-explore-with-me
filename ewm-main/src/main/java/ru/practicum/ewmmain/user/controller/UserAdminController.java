@@ -23,28 +23,28 @@ public class UserAdminController {
     private final UserService userService;
 
     @GetMapping
-    public List<UserDto> getByIds(@RequestParam(name = "ids") List<Long> ids,
-                                  @RequestParam(defaultValue = "0") Integer from,
-                                  @RequestParam(defaultValue = "10") Integer size) {
+    public List<UserDto> getUsersByIds(@RequestParam(name = "ids") List<Long> ids,
+                                       @RequestParam(defaultValue = "0") Integer from,
+                                       @RequestParam(defaultValue = "10") Integer size) {
         PageRequest pageRequest = PageRequest.of(from, size);
-        List<UserDto> getByIds = userService.getByIds(ids, pageRequest);
-        log.info("Вызван метод getByIds() в UserAdminController.");
+        List<UserDto> getUsersByIds = userService.getUsersByIds(ids, pageRequest);
+        log.info("Вызван метод getUsersByIds() в UserAdminController.");
 
-        return ResponseEntity.ok().body(getByIds).getBody();
+        return ResponseEntity.ok().body(getUsersByIds).getBody();
     }
 
     @PostMapping
-    public UserDto create(@RequestBody @Valid NewUserRequest newUserRequest) {
-        log.info("Вызван метод create() в UserAdminController.");
-        UserDto create = userService.create(newUserRequest);
+    public UserDto createUser(@RequestBody @Valid NewUserRequest newUserRequest) {
+        log.info("Вызван метод createUser() в UserAdminController.");
+        UserDto createUser = userService.createUser(newUserRequest);
 
-        return ResponseEntity.ok().body(create).getBody();
+        return ResponseEntity.ok().body(createUser).getBody();
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<HttpStatus> delete(@PathVariable Long userId) {
-        log.info("Вызван метод delete() в UserAdminController для пользователя с id {}.", userId);
-        userService.delete(userId);
+    public ResponseEntity<HttpStatus> deleteUser(@PathVariable Long userId) {
+        log.info("Вызван метод deleteUser() в UserAdminController для пользователя с id {}.", userId);
+        userService.deleteUser(userId);
 
         return ResponseEntity.ok().build();
     }

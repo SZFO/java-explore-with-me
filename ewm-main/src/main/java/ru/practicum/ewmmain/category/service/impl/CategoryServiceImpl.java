@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewmmain.category.dto.CategoryDto;
 import ru.practicum.ewmmain.category.dto.NewCategoryDto;
 import ru.practicum.ewmmain.category.mapper.CategoryMapper;
@@ -16,40 +17,42 @@ import ru.practicum.ewmmain.exception.NotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.practicum.ewmmain.category.mapper.CategoryMapper.*;
-
 @Service
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
 
+    private final CategoryMapper categoryMapper;
+
     @Override
-    public CategoryDto create(NewCategoryDto newCategoryDto) {
+    @Transactional
+    public CategoryDto createCategory(NewCategoryDto newCategoryDto) {
         throwExistName(newCategoryDto.getName());
-        Category category = dtoNewToCategory(newCategoryDto);
+        Category category = categoryMapper.dtoNewToCategory(newCategoryDto);
         category = categoryRepository.save(category);
         log.info("Создана категория: {}.", category);
 
-        return categoryToDto(category);
+        return categoryMapper.categoryToDto(category);
     }
 
     @Override
-    public CategoryDto update(CategoryDto categoryDto) {
+    @Transactional
+    public CategoryDto updateCategory(CategoryDto categoryDto) {
         throwExistName(categoryDto.getName());
-        Category category = dtoToCategory(categoryDto);
+        Category category = categoryMapper.dtoToCategory(categoryDto);
         category.setName(categoryDto.getName());
         categoryRepository.save(category);
         log.debug("Категория с id={} обновлена.", category.getId());
 
-        return categoryToDto(category);
+        return categoryMapper.categoryToDto(category);
     }
 
     @Override
-    public List<CategoryDto> getAll(Pageable pageable) {
+    public List<CategoryDto> getAllCategories(Pageable pageable) {
         List<CategoryDto> categoryDtos = categoryRepository.findAll(pageable)
                 .stream()
-                .map(CategoryMapper::categoryToDto)
+                .map(categoryMapper::categoryToDto)
                 .collect(Collectors.toList());
         log.info("Получение категориий: {}.", categoryDtos);
 
@@ -57,15 +60,16 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryDto getById(Long categoryId) {
+    public CategoryDto getCategoryById(Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException(String.format("Категория с id = %s не найдена.", categoryId)));
 
-        return categoryToDto(category);
+        return categoryMapper.categoryToDto(category);
     }
 
     @Override
-    public void delete(Long categoryId) {
+    @Transactional
+    public void deleteCategory(Long categoryId) {
         categoryRepository.deleteById(categoryId);
     }
 
