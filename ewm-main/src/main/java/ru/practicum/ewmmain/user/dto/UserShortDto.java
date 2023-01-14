@@ -3,7 +3,6 @@ package ru.practicum.ewmmain.user.dto;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import javax.persistence.Transient;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
@@ -17,7 +16,9 @@ import javax.validation.constraints.NotBlank;
 public class UserShortDto {
     @NotBlank
     String name;
+
     @Email
     String email;
+
     Double rating;
 }
