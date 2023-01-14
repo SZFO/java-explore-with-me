@@ -5,7 +5,6 @@ import ru.practicum.ewmmain.user.dto.NewUserRequest;
 import ru.practicum.ewmmain.user.dto.UserDto;
 import ru.practicum.ewmmain.user.dto.UserShortDto;
 import ru.practicum.ewmmain.user.model.User;
-
 @Component
 public class UserMapper {
     public User dtoToUser(NewUserRequest newUserRequest) {
@@ -14,12 +13,12 @@ public class UserMapper {
                 .email(newUserRequest.getEmail())
                 .build();
     }
-
     public UserDto userToDto(User user) {
         return UserDto.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .rating(user.getRating() != null ? user.getRating() : 0)
                 .build();
     }
 
@@ -27,6 +26,7 @@ public class UserMapper {
         return UserShortDto.builder()
                 .name(user.getName())
                 .email(user.getEmail())
+                .rating(user.getRating() != null ? user.getRating() : 0)
                 .build();
     }
 }

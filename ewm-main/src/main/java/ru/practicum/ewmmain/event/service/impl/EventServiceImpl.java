@@ -4,6 +4,7 @@ import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.math3.util.Precision;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,11 @@ import ru.practicum.ewmmain.event.repository.EventRepository;
 import ru.practicum.ewmmain.event.service.EventService;
 import ru.practicum.ewmmain.exception.BadRequestException;
 import ru.practicum.ewmmain.exception.NotFoundException;
+import ru.practicum.ewmmain.event.dto.ReactionDto;
+import ru.practicum.ewmmain.event.mapper.ReactionMapper;
+import ru.practicum.ewmmain.event.model.Reaction;
+import ru.practicum.ewmmain.event.model.StateReaction;
+import ru.practicum.ewmmain.event.repository.ReactionRepository;
 import ru.practicum.ewmmain.request.dto.ParticipationRequestDto;
 import ru.practicum.ewmmain.request.mapper.ParticipationRequestMapper;
 import ru.practicum.ewmmain.request.model.ParticipationRequest;
@@ -63,6 +69,10 @@ public class EventServiceImpl implements EventService {
 
     private final UserMapper userMapper;
 
+    private final ReactionRepository reactionRepository;
+
+    private final ReactionMapper reactionMapper;
+
     @Override
     @Transactional
     public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
@@ -96,8 +106,7 @@ public class EventServiceImpl implements EventService {
         log.info("Получены события, добавленные пользователем с id = {}.", userId);
 
         return eventList.stream()
-                .map(e -> eventMapper.eventToShortDto(e, categoryMapper.categoryToDto(e.getCategory()),
-                        userMapper.userToShortDto(e.getInitiator()),
+                .map(e -> eventMapper.eventToShortDto(e,
                         participationRequestRepository.countAllByEventIdAndStatus(eventIds,
                                 StateParticipationRequest.CONFIRMED),
                         statsClient.getViews(e)))
@@ -221,6 +230,9 @@ public class EventServiceImpl implements EventService {
             case "VIEWS":
                 sorting = "view";
                 break;
+            case "RATING":
+                sorting = "rating";
+                break;
             default:
                 throw new IllegalStateException(String.format("Неизвестная сортировка %s.", sort));
         }
@@ -257,8 +269,7 @@ public class EventServiceImpl implements EventService {
         log.info("Получены события с возможностью фильтрации.");
 
         return filteredEvents.stream()
-                .map(e -> eventMapper.eventToShortDto(e, categoryMapper.categoryToDto(e.getCategory()),
-                        userMapper.userToShortDto(e.getInitiator()),
+                .map(e -> eventMapper.eventToShortDto(e,
                         participationRequestRepository.countAllByEventIdAndStatus(eventIds,
                                 StateParticipationRequest.CONFIRMED),
                         statsClient.getViews(e)))
@@ -370,6 +381,81 @@ public class EventServiceImpl implements EventService {
         log.info("Отклонено событие с id = {}.", eventId);
 
         return getCompleteFullDto(event);
+    }
+
+    @Override
+    @Transactional
+    public ReactionDto createReaction(Long userId, Long eventId, StateReaction stateReaction) {
+        User user = getUserById(userId);
+        Event event = getEventById(eventId);
+        if (Objects.equals(event.getInitiator().getId(), userId)) {
+            throw new BadRequestException("Инциатор события не может оставить реакцию на собственное событие.");
+        }
+        if (Boolean.FALSE.equals(participationRequestRepository.existsByRequesterIdAndEventIdAndStatus(userId, eventId,
+                StateParticipationRequest.CONFIRMED))) {
+            throw new BadRequestException("Запрещено оставлять реакцию событиям, " +
+                    "в которых вы не участвуете.");
+        }
+        if (reactionRepository.findByEventIdAndUserId(eventId, userId).isPresent()) {
+            throw new BadRequestException("Вы уже оставляли реакцию на это событие.");
+        }
+        Reaction reaction = new Reaction();
+        reaction.setUser(user);
+        reaction.setEvent(event);
+        reaction.setStateReaction(stateReaction);
+        reactionRepository.save(reaction);
+        updateEventRate(event);
+        updateUserRate(event.getInitiator());
+        log.info("Создана реакция типа {} на событие с id = {}.", stateReaction.name(), eventId);
+
+        return reactionMapper.reactionToDto(reaction);
+    }
+
+    @Override
+    @Transactional
+    public void deleteReaction(Long userId, Long eventId) {
+        Event event = getEventById(eventId);
+        Reaction reaction = reactionRepository.findByEventIdAndUserId(eventId, userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Реакция на событие с id = %s от пользователя " +
+                        "с id = %s отсутсвует.", eventId, userId)));
+        reactionRepository.delete(reaction);
+        updateEventRate(event);
+        updateUserRate(event.getInitiator());
+        log.info("Удален {} события с id {} пользователем с id {}", reaction.getStateReaction(), eventId, userId);
+    }
+
+    private void updateEventRate(Event event) {
+        Double rating = calculateEventRate(event.getId());
+        event.setRating(rating);
+        eventRepository.save(event);
+        log.info("Обновлен рейтинг события с id {}", event.getId());
+    }
+
+    private void updateUserRate(User user) {
+        Double rating = calculateUserRate(user.getId());
+        user.setRating(rating);
+        userRepository.save(user);
+        log.info("Обновлен рейтинг пользователя с id {}", user.getId());
+    }
+
+    private Double calculateEventRate(Long eventId) {
+        Long countPositive = reactionRepository.countAllByEventIdAndStateReaction(eventId,
+                StateReaction.LIKE);
+        Long countTotal = reactionRepository.countAllByEventId(eventId);
+        if (countTotal == 0) {
+            return 0D;
+        }
+        return Precision.round(countPositive.doubleValue() / countTotal.doubleValue() * 10D, 2);
+    }
+
+    private Double calculateUserRate(Long userId) {
+        Long countPositive = reactionRepository.countAllByEventInitiatorIdAndStateReaction(userId,
+                StateReaction.LIKE);
+        Long countTotal = reactionRepository.countAllByEventInitiatorId(userId);
+        if (countTotal == 0) {
+            return 0D;
+        }
+        return Precision.round(countPositive.doubleValue() / countTotal.doubleValue() * 10D, 2);
     }
 
     private User getUserById(Long userId) {

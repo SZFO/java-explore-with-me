@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewmmain.category.mapper.CategoryMapper;
 import ru.practicum.ewmmain.compilation.dto.CompilationDto;
 import ru.practicum.ewmmain.compilation.dto.NewCompilationDto;
 import ru.practicum.ewmmain.compilation.mapper.CompilationMapper;
@@ -21,7 +20,6 @@ import ru.practicum.ewmmain.exception.NotFoundException;
 import ru.practicum.ewmmain.request.model.StateParticipationRequest;
 import ru.practicum.ewmmain.request.repository.ParticipationRequestRepository;
 import ru.practicum.ewmmain.stat.client.StatsClient;
-import ru.practicum.ewmmain.user.mapper.UserMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,13 +38,9 @@ public class CompilationServiceImpl implements CompilationService {
 
     private final EventRepository eventRepository;
 
-    private final CategoryMapper categoryMapper;
-
     private final CompilationMapper compilationMapper;
 
     private final EventMapper eventMapper;
-
-    private final UserMapper userMapper;
 
     @Override
     public CompilationDto getCompilationById(Long compId) {
@@ -67,8 +61,7 @@ public class CompilationServiceImpl implements CompilationService {
         compilationRepository.save(compilation);
         log.info("Новая подборка событий с id = {} добавлена.", compilation.getId());
         List<EventShortDto> eventShortDtos = events.stream()
-                .map(e -> eventMapper.eventToShortDto(e, categoryMapper.categoryToDto(e.getCategory()),
-                        userMapper.userToShortDto(e.getInitiator()),
+                .map(e -> eventMapper.eventToShortDto(e,
                         participationRequestRepository.countAllByEventIdAndStatus(eventIds,
                                 StateParticipationRequest.CONFIRMED),
                         statsClient.getViews(e)))
@@ -159,8 +152,7 @@ public class CompilationServiceImpl implements CompilationService {
         List<Long> eventIds = compilation.getEvents().stream().map(Event::getId).collect(Collectors.toList());
 
         return compilation.getEvents().stream()
-                .map(e -> eventMapper.eventToShortDto(e, categoryMapper.categoryToDto(e.getCategory()),
-                        userMapper.userToShortDto(e.getInitiator()),
+                .map(e -> eventMapper.eventToShortDto(e,
                         participationRequestRepository.countAllByEventIdAndStatus(eventIds,
                                 StateParticipationRequest.CONFIRMED),
                         statsClient.getViews(e)))
