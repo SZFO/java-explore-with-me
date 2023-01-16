@@ -399,10 +399,11 @@ public class EventServiceImpl implements EventService {
         if (reactionRepository.findByEventIdAndUserId(eventId, userId).isPresent()) {
             throw new BadRequestException("Вы уже оставляли реакцию на это событие.");
         }
-        Reaction reaction = new Reaction();
-        reaction.setUser(user);
-        reaction.setEvent(event);
-        reaction.setStateReaction(stateReaction);
+        Reaction reaction = Reaction.builder()
+                .user(user)
+                .event(event)
+                .stateReaction(stateReaction)
+                .build();
         reactionRepository.save(reaction);
         updateEventRate(event);
         updateUserRate(event.getInitiator());

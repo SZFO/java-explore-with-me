@@ -108,8 +108,7 @@ public class EventPrivateController {
     }
 
     @PostMapping("/{eventId}/reactions")
-    public ReactionDto createReaction(@PathVariable(name = "eventId") Long eventId,
-                                      @PathVariable(name = "userId") Long userId,
+    public ReactionDto createReaction(@PathVariable Long eventId, @PathVariable Long userId,
                                       @RequestParam(name = "reaction") StateReaction stateReaction) {
         log.info("Вызван метод createReaction() в EventPrivateController пользователем с id = {} для " +
                 "события с id = {}. Тип реакции: {}.", userId, eventId, stateReaction.name());
@@ -119,8 +118,7 @@ public class EventPrivateController {
     }
 
     @DeleteMapping("/{eventId}/reactions")
-    public ResponseEntity<HttpStatus> deleteReaction(@PathVariable(name = "eventId") Long eventId,
-                                                     @PathVariable(name = "userId") Long userId) {
+    public ResponseEntity<HttpStatus> deleteReaction(@PathVariable Long eventId, @PathVariable Long userId) {
         log.info("Вызван метод deleteReaction() в EventPrivateController пользователем с id = {} для " +
                 "события с id = {}.", userId, eventId);
         eventService.deleteReaction(userId, eventId);
