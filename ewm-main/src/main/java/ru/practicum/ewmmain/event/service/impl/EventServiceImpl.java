@@ -50,6 +50,7 @@ import static com.querydsl.core.types.ExpressionUtils.allOf;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
 
