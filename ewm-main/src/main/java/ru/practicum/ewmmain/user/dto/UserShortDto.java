@@ -19,4 +19,6 @@ public class UserShortDto {
 
     @Email
     String email;
+
+    Double rating;
 }

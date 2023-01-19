@@ -3,6 +3,7 @@ package ru.practicum.ewmstats.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewmstats.dto.EndpointHitDto;
 import ru.practicum.ewmstats.dto.ViewStatsDto;
 import ru.practicum.ewmstats.mapper.EndpointHitMapper;
@@ -19,11 +20,14 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class StatServiceImpl implements StatService {
     private final StatRepository statRepository;
 
     private final EndpointHitMapper endpointHitMapper;
 
+    @Override
+    @Transactional
     public EndpointHitDto save(EndpointHitDto endpointHitDto) {
         EndpointHit endpointHit = endpointHitMapper.dtotoEndpointHit(endpointHitDto);
         endpointHit.setTimestamp(LocalDateTime.now());
@@ -32,6 +36,7 @@ public class StatServiceImpl implements StatService {
         return endpointHitMapper.endpointHitToDto(statRepository.save(endpointHit));
     }
 
+    @Override
     public List<ViewStatsDto> findStat(String start, String end, List<String> uris, Boolean unique) {
         LocalDateTime startTime = LocalDateTime.parse(
                 URLDecoder.decode(start, StandardCharsets.UTF_8),

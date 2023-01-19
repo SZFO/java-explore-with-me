@@ -10,6 +10,8 @@ import ru.practicum.ewmmain.event.dto.EventShortDto;
 import ru.practicum.ewmmain.event.dto.NewEventDto;
 import ru.practicum.ewmmain.event.model.Event;
 import ru.practicum.ewmmain.event.model.Location;
+import ru.practicum.ewmmain.event.model.StateReaction;
+import ru.practicum.ewmmain.event.repository.ReactionRepository;
 import ru.practicum.ewmmain.user.dto.UserShortDto;
 import ru.practicum.ewmmain.user.mapper.UserMapper;
 import ru.practicum.ewmmain.user.model.User;
@@ -18,7 +20,10 @@ import ru.practicum.ewmmain.user.model.User;
 @RequiredArgsConstructor
 public class EventMapper {
     private final CategoryMapper categoryMapper;
+
     private final UserMapper userMapper;
+
+    private final ReactionRepository reactionRepository;
 
     public Event dtoToNewEvent(NewEventDto newEventDto, Category category, User initiator) {
         return Event.builder()
@@ -55,21 +60,26 @@ public class EventMapper {
                 .state(event.getState())
                 .title(event.getTitle())
                 .views(view)
+                .likes(reactionRepository.countAllByEventIdAndStateReaction(event.getId(), StateReaction.LIKE))
+                .disLikes(reactionRepository.countAllByEventIdAndStateReaction(event.getId(), StateReaction.DISLIKE))
+                .rating(event.getRating() != null ? event.getRating() : 0)
                 .build();
     }
 
-    public EventShortDto eventToShortDto(Event event, CategoryDto category, UserShortDto initiator,
-                                         Long confirmedRequests, Long view) {
+    public EventShortDto eventToShortDto(Event event, Long confirmedRequests, Long view) {
         return EventShortDto.builder()
                 .id(event.getId())
                 .annotation(event.getAnnotation())
-                .category(category)
+                .category(categoryMapper.categoryToDto(event.getCategory()))
                 .confirmedRequests(confirmedRequests)
                 .eventDate(event.getEventDate())
-                .initiator(initiator)
+                .initiator(userMapper.userToShortDto(event.getInitiator()))
                 .paid(event.getPaid())
                 .title(event.getTitle())
                 .views(view)
+                .likes(reactionRepository.countAllByEventIdAndStateReaction(event.getId(), StateReaction.LIKE))
+                .disLikes(reactionRepository.countAllByEventIdAndStateReaction(event.getId(), StateReaction.DISLIKE))
+                .rating(event.getRating() != null ? event.getRating() : 0D)
                 .build();
     }
 
@@ -77,18 +87,6 @@ public class EventMapper {
         return Location.builder()
                 .lat(lat)
                 .lon(lon)
-                .build();
-    }
-
-    public EventShortDto toShortDto(Event event) {
-        return EventShortDto.builder()
-                .id(event.getId())
-                .title(event.getTitle())
-                .annotation(event.getAnnotation())
-                .category(categoryMapper.categoryToDto(event.getCategory()))
-                .eventDate(event.getEventDate())
-                .paid(event.getPaid())
-                .initiator(userMapper.userToShortDto(event.getInitiator()))
                 .build();
     }
 }

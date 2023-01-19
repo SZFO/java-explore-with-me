@@ -3,6 +3,7 @@ package ru.practicum.ewmmain.event.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,8 @@ import ru.practicum.ewmmain.event.dto.EventShortDto;
 import ru.practicum.ewmmain.event.dto.NewEventDto;
 import ru.practicum.ewmmain.event.dto.UpdateEventRequest;
 import ru.practicum.ewmmain.event.service.EventService;
+import ru.practicum.ewmmain.event.dto.ReactionDto;
+import ru.practicum.ewmmain.event.model.StateReaction;
 import ru.practicum.ewmmain.request.dto.ParticipationRequestDto;
 
 import javax.validation.Valid;
@@ -27,27 +30,27 @@ public class EventPrivateController {
     private final EventService eventService;
 
     @PostMapping
-    public EventFullDto createEvent(@PathVariable(required = false) Long userId,
-                                    @RequestBody(required = false) @Valid NewEventDto newEventDto) {
-        log.info("Вызван метод createEvent() в EventPrivateController пользователем с id = {}.", userId);
-        EventFullDto createEvent = eventService.createEvent(userId, newEventDto);
+    public EventFullDto create(@PathVariable(required = false) Long userId,
+                               @RequestBody(required = false) @Valid NewEventDto newEventDto) {
+        log.info("Вызван метод create() в EventPrivateController пользователем с id = {}.", userId);
+        EventFullDto createEventDto = eventService.createEvent(userId, newEventDto);
 
-        return ResponseEntity.ok().body(createEvent).getBody();
+        return ResponseEntity.ok().body(createEventDto).getBody();
     }
 
     @PatchMapping
-    public EventFullDto updateEventByOwner(@PathVariable(required = false) @Positive Long userId,
-                                           @RequestBody(required = false) @Valid UpdateEventRequest updateRequest) {
-        log.info("Вызван метод updateByOwner() в EventPrivateController пользователем с id = {}.", userId);
+    public EventFullDto update(@PathVariable(required = false) @Positive Long userId,
+                               @RequestBody(required = false) @Valid UpdateEventRequest updateRequest) {
+        log.info("Вызван метод update() в EventPrivateController пользователем с id = {}.", userId);
         EventFullDto updateEventByOwner = eventService.updateEventByOwner(userId, updateRequest);
 
         return ResponseEntity.ok().body(updateEventByOwner).getBody();
     }
 
     @GetMapping
-    public List<EventShortDto> getEventByOwner(@PathVariable(required = false) @Positive Long userId,
-                                               @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                               @RequestParam(defaultValue = "10") @Positive Integer size) {
+    public List<EventShortDto> getByOwner(@PathVariable(required = false) @Positive Long userId,
+                                          @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                          @RequestParam(defaultValue = "10") @Positive Integer size) {
         log.info("Вызван метод getByOwner() в EventPrivateController пользователем с id = {}.", userId);
         PageRequest pageRequest = PageRequest.of(from, size);
         List<EventShortDto> getEventByOwner = eventService.getEventByOwner(userId, pageRequest);
@@ -58,19 +61,19 @@ public class EventPrivateController {
     @GetMapping("/{eventId}")
     public EventFullDto getById(@PathVariable(required = false) @Positive Long userId,
                                 @PathVariable(required = false) @Positive Long eventId) {
-        log.info("Вызван метод getAuthorsEventById() в EventPrivateController для события с id = {}.", eventId);
-        EventFullDto getById = eventService.getAuthorsEventById(userId, eventId);
+        log.info("Вызван метод getById() в EventPrivateController для события с id = {}.", eventId);
+        EventFullDto getEventDtoById = eventService.getAuthorsEventById(userId, eventId);
 
-        return ResponseEntity.ok().body(getById).getBody();
+        return ResponseEntity.ok().body(getEventDtoById).getBody();
     }
 
     @PatchMapping("/{eventId}")
     public EventFullDto cancel(@PathVariable(required = false) @Positive Long userId,
                                @PathVariable(required = false) @Positive Long eventId) {
-        log.info("Вызван метод cancelAuthorsEvent() в EventPrivateController для события с id = {}.", eventId);
-        EventFullDto cancel = eventService.cancelAuthorsEvent(userId, eventId);
+        log.info("Вызван метод cancel() в EventPrivateController для события с id = {}.", eventId);
+        EventFullDto cancelEvent = eventService.cancelAuthorsEvent(userId, eventId);
 
-        return ResponseEntity.ok().body(cancel).getBody();
+        return ResponseEntity.ok().body(cancelEvent).getBody();
     }
 
     @GetMapping("/{eventId}/requests")
@@ -102,5 +105,24 @@ public class EventPrivateController {
         ParticipationRequestDto rejectRequest = eventService.rejectUsersRequest(userId, eventId, requestId);
 
         return ResponseEntity.ok().body(rejectRequest).getBody();
+    }
+
+    @PostMapping("/{eventId}/reactions")
+    public ReactionDto createReaction(@PathVariable Long eventId, @PathVariable Long userId,
+                                      @RequestParam(name = "reaction") StateReaction stateReaction) {
+        log.info("Вызван метод createReaction() в EventPrivateController пользователем с id = {} для " +
+                "события с id = {}. Тип реакции: {}.", userId, eventId, stateReaction.name());
+        ReactionDto createReaction = eventService.createReaction(userId, eventId, stateReaction);
+
+        return ResponseEntity.ok().body(createReaction).getBody();
+    }
+
+    @DeleteMapping("/{eventId}/reactions")
+    public ResponseEntity<HttpStatus> deleteReaction(@PathVariable Long eventId, @PathVariable Long userId) {
+        log.info("Вызван метод deleteReaction() в EventPrivateController пользователем с id = {} для " +
+                "события с id = {}.", userId, eventId);
+        eventService.deleteReaction(userId, eventId);
+
+        return ResponseEntity.ok().build();
     }
 }

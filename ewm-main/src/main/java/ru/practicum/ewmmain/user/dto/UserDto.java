@@ -21,4 +21,6 @@ public class UserDto {
 
     @Email
     String email;
+
+    Double rating;
 }

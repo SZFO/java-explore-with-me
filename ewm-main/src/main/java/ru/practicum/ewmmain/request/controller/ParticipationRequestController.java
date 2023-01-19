@@ -20,8 +20,8 @@ public class ParticipationRequestController {
     private final ParticipationRequestService requestService;
 
     @GetMapping
-    public List<ParticipationRequestDto> getRequestsByUserId(@PathVariable @NotNull Long userId) {
-        log.info("Вызван метод getRequestsByUserId() в ParticipationRequestController для " +
+    public List<ParticipationRequestDto> getByUserId(@PathVariable @NotNull Long userId) {
+        log.info("Вызван метод getByUserId() в ParticipationRequestController для " +
                 "пользователя с id {}.", userId);
         List<ParticipationRequestDto> getRequestsByUserId = requestService.getRequestsByUserId(userId);
 
@@ -29,22 +29,23 @@ public class ParticipationRequestController {
     }
 
     @PostMapping
-    public ParticipationRequestDto createParticipationRequest(@PathVariable @NotNull Long userId,
+    public ParticipationRequestDto create(@PathVariable @NotNull Long userId,
                                                               @RequestParam Long eventId) {
-        log.info("Вызван метод createParticipationRequest() в ParticipationRequestController пользователем с id {} " +
+        log.info("Вызван метод create() в ParticipationRequestController пользователем с id {} " +
                 "для события с id {}.", userId, eventId);
-        ParticipationRequestDto createParticipationRequest = requestService.createParticipationRequest(userId, eventId);
+        ParticipationRequestDto createParticipationRequestDto = requestService.createParticipationRequest(userId,
+                eventId);
 
-        return ResponseEntity.ok().body(createParticipationRequest).getBody();
+        return ResponseEntity.ok().body(createParticipationRequestDto).getBody();
     }
 
     @PatchMapping("/{requestId}/cancel")
-    public ParticipationRequestDto cancelParticipationRequest(@PathVariable @NotNull Long userId,
+    public ParticipationRequestDto cancel(@PathVariable @NotNull Long userId,
                                           @PathVariable @NotNull Long requestId) {
-        log.info("Вызван метод cancelParticipationRequest() в ParticipationRequestController пользователем с id {} " +
+        log.info("Вызван метод cancel() в ParticipationRequestController пользователем с id {} " +
                 "для зароса на участие с id {}.", userId, requestId);
-        ParticipationRequestDto cancelParticipationRequest = requestService.cancelParticipationRequest(userId, requestId);
+        ParticipationRequestDto cancelParticipationRequestDto = requestService.cancelParticipationRequest(userId, requestId);
 
-        return ResponseEntity.ok().body(cancelParticipationRequest).getBody();
+        return ResponseEntity.ok().body(cancelParticipationRequestDto).getBody();
     }
 }

@@ -28,4 +28,7 @@ public class User {
     @NotNull
     @Column(name = "email", nullable = false, unique = true)
     String email;
+
+    @Column(name = "rating", nullable = false)
+    private Double rating;
 }
